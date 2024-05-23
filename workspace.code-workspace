@@ -5,6 +5,7 @@
 		}
 	],
 	"settings": {
+		"python.defaultInterpreterPath": "/home/luc/python-env/anki-awesome-tts/bin/python",
 		"editor.minimap.enabled": false
 	}
 }
