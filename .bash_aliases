@@ -1,0 +1,1 @@
+alias package='./package.sh'
