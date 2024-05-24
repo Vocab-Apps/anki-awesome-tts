@@ -3,8 +3,13 @@
 set -eoux pipefail
 
 # exit if argument is not passed in
+if [ -z "$1" ]; then
+  echo "Please pass major, minor or patch"
+  exit 1
+fi
+
 if [ -z "$2" ]; then
-  echo "Please pass major, minor or patch, and release notes"
+  echo "Need release notes"
   exit 1
 fi
 
