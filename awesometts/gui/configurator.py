@@ -18,7 +18,7 @@
 
 """Configuration dialog"""
 
-from locale import format as locale
+from locale import format_string as locale
 import os
 import os.path
 from sys import platform
