@@ -3,8 +3,8 @@
 set -eoux pipefail
 
 # exit if argument is not passed in
-if [ -z "$1" ]; then
-  echo "Please pass major, minor or patch"
+if [ -z "$2" ]; then
+  echo "Please pass major, minor or patch, and release notes"
   exit 1
 fi
 
@@ -45,6 +45,10 @@ zip -9 "${ADDON_FILENAME}" \
 
 # sync 
 rclone sync ~/anki-addons-releases/ dropbox:Anki/anki-addons-releases/
+
+# create github release
+RELEASE_NOTES=$2
+gh release create v${VERSION_NUMBER} ${ADDON_FILENAME} --title "AwesomeTTS v${VERSION_NUMBER}" --notes "${RELEASE_NOTES}"
 
 # if you need to undo a release:
 # git tag -d v0.2
