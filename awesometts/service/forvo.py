@@ -822,7 +822,8 @@ class Forvo(Service):
 
             # run request
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0'}
-            response = requests.get(url, headers=headers)
+            # forvo's http server / WAF / frontend setup is weird, so we have to disable SSL verification
+            response = requests.get(url, headers=headers, verify=False)
             self._logger.debug(f'response.content: {response.content}')
 
             if response.status_code == 200:
@@ -841,11 +842,13 @@ class Forvo(Service):
                     if item['word'] == text:
                         audio_url = item['pathmp3']
                         break
-                self.net_download(
-                    path,
-                    audio_url,
-                    require=dict(mime='audio/mpeg', size=512),
-                )            
+
+                response = requests.get(audio_url, verify=False)
+                response.raise_for_status()
+
+                with open(path, 'wb') as audio:
+                    audio.write(response.content)
+
             else:
                 data = json.loads(response.content)
                 error_text = str(data)
