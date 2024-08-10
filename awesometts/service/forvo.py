@@ -25,6 +25,10 @@ from .base import Service
 from .common import Trait
 import urllib
 import requests
+import urllib3
+import warnings
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 __all__ = ['Forvo']
 
@@ -857,4 +861,5 @@ class Forvo(Service):
                 error_message = f"Status code: {response.status_code} error: {error_text} text: [{text}] voice: {options['voice']} gender: {sex}"
                 self._logger.error(error_message)
                 raise ValueError(error_message)
-        
+
+warnings.resetwarnings()
