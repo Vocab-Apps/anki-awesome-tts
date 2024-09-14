@@ -1,0 +1,10 @@
+session_name: awesometts
+start_directory: ./ # load session relative to config location (project root).
+shell_command_before:
+  - source ${HOME}/python-env/anki-awesome-tts/bin/activate
+  - source .bash_aliases
+  - source ${HOME}/secrets/hypertts/hypertts_tests.sh
+windows:
+- window_name: awesometts
+  focus: true
+- window_name: git
