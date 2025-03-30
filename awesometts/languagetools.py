@@ -1,6 +1,17 @@
 import os
 import requests
 import json
+import base64
+from typing import Optional
+from dataclasses import dataclass
+
+from . import trial
+
+@dataclass
+class TrialRequestReponse:
+    success: bool
+    api_key: Optional[str] = None
+    error: Optional[str] = None
 
 class LanguageTools:
     def __init__(self, api_key, logger, client_version):
@@ -8,7 +19,7 @@ class LanguageTools:
         self.base_url = 'https://cloudlanguagetools-api.vocab.ai'
         if 'ANKI_LANGUAGE_TOOLS_BASE_URL' in os.environ:
             self.base_url = os.environ['ANKI_LANGUAGE_TOOLS_BASE_URL']
-        self.vocab_api_base_url = 'https://app.vocab.ai/languagetools-api/v2'
+        self.vocab_api_base_url = 'https://app.vocab.ai/languagetools-api/v3'
         self.api_key = api_key
         self.client_version = client_version
         self.trial_instant_signed_up = False
@@ -128,3 +139,36 @@ class LanguageTools:
             error_message = f"Status code: {response.status_code} ({response.content})"
             self.logger.error(error_message)
             raise ValueError(error_message)                    
+
+
+    def build_trial_key_request_data(self, email, password, client_uuid):
+        namespace = {}
+        exec(base64.b64decode(trial.TRIAL_CHECK_1).decode('utf-8'), namespace)        
+        exec(base64.b64decode(trial.REQUEST_TRIAL_PAYLOAD).decode('utf-8'), namespace)
+        data = namespace['build_trial_request_payload'](email, client_uuid)
+        data['email'] = email
+        data['password'] = password
+        return data
+
+    def request_trial_key(self, email, password, client_uuid) -> TrialRequestReponse:
+        self.logger.info(f'requesting trial key for email {email}')
+        
+        data = self.build_trial_key_request_data(email, password, client_uuid)
+        response = requests.post(self.vocabai_api_base_url + '/register_trial', 
+                                 json=data,
+                                 headers=self.get_trial_request_headers())
+        data = json.loads(response.content)
+        self.logger.info(f'retrieved {data}, status_code: {response.status_code}')
+
+        if response.status_code == 201:
+            # trial key was successfully created
+            return TrialRequestReponse(
+                success=True,
+                api_key=data['api_key']
+            )
+        else:
+            error_message = '<b>error:</b> ' + ', '.join([f"{key}: {value}" for key, value in data.items()])
+            return TrialRequestReponse(
+                success=False,
+                error=error_message
+            )
