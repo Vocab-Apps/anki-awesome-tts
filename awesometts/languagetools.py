@@ -14,7 +14,7 @@ class TrialRequestReponse:
     error: Optional[str] = None
 
 class LanguageTools:
-    def __init__(self, api_key, logger, client_version):
+    def __init__(self, api_key, logger, client_version, client_uuid):
         self.logger = logger
         self.base_url = 'https://cloudlanguagetools-api.vocab.ai'
         if 'ANKI_LANGUAGE_TOOLS_BASE_URL' in os.environ:
@@ -24,6 +24,7 @@ class LanguageTools:
             self.vocab_api_base_url = os.environ['ANKI_LANGUAGE_TOOLS_VOCABAI_BASE_URL']
         self.api_key = api_key
         self.client_version = client_version
+        self.client_uuid = client_uuid
         self.trial_instant_signed_up = False
         self.api_key_verified = False
         self.use_vocabai_api = False
@@ -152,10 +153,10 @@ class LanguageTools:
         data['password'] = password
         return data
 
-    def request_trial_key(self, email, password, client_uuid) -> TrialRequestReponse:
+    def request_trial_key(self, email, password) -> TrialRequestReponse:
         self.logger.info(f'requesting trial key for email {email}')
         
-        data = self.build_trial_key_request_data(email, password, client_uuid)
+        data = self.build_trial_key_request_data(email, password, self.client_uuid)
         response = requests.post(self.vocabai_api_base_url + '/register_trial', 
                                  json=data,
                                  headers=self.get_trial_request_headers())

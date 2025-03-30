@@ -24,6 +24,7 @@ from os.path import join
 import os
 import sys
 from time import time
+import uuid
 
 import anki
 import aqt
@@ -106,6 +107,14 @@ else:
     logger = Bundle(debug=lambda *a, **k: None, error=lambda *a, **k: None,
                     info=lambda *a, **k: None, warn=lambda *a, **k: None)
 
+addon_config = aqt.mw.addonManager.getConfig('awesometts')
+user_uuid = addon_config.get('user_uuid', None)
+if user_uuid == None:
+    user_uuid = uuid.uuid4().hex
+    addon_config['user_uuid'] = user_uuid
+    aqt.mw.addonManager.writeConfig('awesometts', addon_config)
+
+
 config = Config(
     db=Bundle(path=paths.CONFIG,
               table='general',
@@ -173,7 +182,7 @@ config = Config(
     ],
 )
 
-languagetools = LanguageTools(config['plus_api_key'], logger, VERSION)
+languagetools = LanguageTools(config['plus_api_key'], logger, VERSION, user_uuid)
 
 try:
     from aqt.sound import av_player
