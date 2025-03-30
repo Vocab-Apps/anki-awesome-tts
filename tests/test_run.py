@@ -14,6 +14,7 @@ import base64
 import hashlib
 import uuid
 import hmac
+from PyQt6.QtWidgets import QApplication
 
 class Success(Exception):
     pass
@@ -42,6 +43,11 @@ def clear_cache(cache_path):
     for filename in os.listdir(cache_path):
         file_path = os.path.join(cache_path, filename)
         os.unlink(file_path)
+
+# Create a QApplication instance before running tests
+app = QApplication.instance()
+if app is None:
+    app = QApplication([])
 
 class TestClass():
 
