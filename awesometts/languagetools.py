@@ -20,6 +20,8 @@ class LanguageTools:
         if 'ANKI_LANGUAGE_TOOLS_BASE_URL' in os.environ:
             self.base_url = os.environ['ANKI_LANGUAGE_TOOLS_BASE_URL']
         self.vocab_api_base_url = 'https://app.vocab.ai/languagetools-api/v3'
+        if 'ANKI_LANGUAGE_TOOLS_VOCABAI_BASE_URL' in os.environ:
+            self.vocab_api_base_url = os.environ['ANKI_LANGUAGE_TOOLS_VOCABAI_BASE_URL']
         self.api_key = api_key
         self.client_version = client_version
         self.trial_instant_signed_up = False
@@ -94,14 +96,14 @@ class LanguageTools:
         data = json.loads(response.content)
         return data
 
-    def request_trial_key(self, email):
-        self.logger.info(f'requesting trial key for email {email}')
-        response = requests.post(self.base_url + '/request_trial_key', json={'email': email})
-        data = json.loads(response.content)
-        self.logger.info(f'retrieved {data}')
-        if 'api_key' in data:
-            self.trial_instant_signed_up = True
-        return data
+    # def request_trial_key(self, email):
+    #     self.logger.info(f'requesting trial key for email {email}')
+    #     response = requests.post(self.base_url + '/request_trial_key', json={'email': email})
+    #     data = json.loads(response.content)
+    #     self.logger.info(f'retrieved {data}')
+    #     if 'api_key' in data:
+    #         self.trial_instant_signed_up = True
+    #     return data
 
 
     def generate_audio_v2(self, source_text, service, request_mode, language_code, deck_name, voice_key, options, path):
