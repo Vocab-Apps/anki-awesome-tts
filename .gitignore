@@ -13,3 +13,4 @@ __pycache__/
 meta.json
 /awesometts/.cache/
 /user_files/cache/
+.aider.*

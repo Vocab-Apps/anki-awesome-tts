@@ -8,3 +8,4 @@ windows:
 - window_name: awesometts
   focus: true
 - window_name: git
+- window_name: aider
