@@ -39,7 +39,14 @@ if __name__ == "__main__":
 # n.b. Import is intentionally placed down here so that Python processes it
 # only if the module check above is not tripped.
 
-from . import awesometts  # noqa, pylint:disable=wrong-import-position
+# Check if we're in test mode
+import sys
+if hasattr(sys, '_pytest_mode'):
+    # Use absolute import for testing
+    import awesometts  # noqa, pylint:disable=wrong-import-position
+else:
+    # Use relative import for normal Anki operation
+    from . import awesometts  # noqa, pylint:disable=wrong-import-position
 
 
 # If a specific component of AwesomeTTS that you do not need is causing a
