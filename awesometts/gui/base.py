@@ -373,7 +373,9 @@ class ServiceDialog(Dialog):
                         idx = dropdown.currentIndex()
                         self._on_service_activated(idx, force_options_reload=True)
                         # Show success message
-                        aqt.utils.showInfo("Successfully signed up for AwesomeTTS Plus!", parent=self)
+                        trial_confirmation_message = """<b>IMPORTANT</b>: You must confirm your email address before you can use the service. """\
+"""The email subject should be <b>Please Confirm Your Email Address</b> and sender: <b>Vocab.Ai</b>."""
+                        aqt.utils.showInfo(trial_confirmation_message, parent=self)
                     else:
                         # Show error message when success is False
                         error_message = getattr(trial_signup_result, 'error', "Signup failed. Please try again.")
