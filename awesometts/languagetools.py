@@ -157,21 +157,46 @@ class LanguageTools:
         self.logger.info(f'requesting trial key for email {email}')
         
         data = self.build_trial_key_request_data(email, password, self.client_uuid)
-        response = requests.post(self.vocabai_api_base_url + '/register_trial', 
-                                 json=data,
-                                 headers=self.get_trial_request_headers())
-        data = json.loads(response.content)
-        self.logger.info(f'retrieved {data}, status_code: {response.status_code}')
-
-        if response.status_code == 201:
-            # trial key was successfully created
-            return TrialRequestReponse(
-                success=True,
-                api_key=data['api_key']
-            )
+        
+        # Make sure we have the method to get headers
+        if not hasattr(self, 'get_trial_request_headers'):
+            # Default headers if method doesn't exist
+            headers = {
+                'User-Agent': f'anki-awesometts/{self.client_version}',
+                'Content-Type': 'application/json'
+            }
         else:
-            error_message = '<b>error:</b> ' + ', '.join([f"{key}: {value}" for key, value in data.items()])
+            headers = self.get_trial_request_headers()
+        
+        # Make sure we have the correct URL
+        if not hasattr(self, 'vocab_api_base_url'):
+            base_url = self.base_url
+        else:
+            base_url = self.vocab_api_base_url
+            
+        response = requests.post(base_url + '/register_trial', 
+                                 json=data,
+                                 headers=headers)
+        
+        try:
+            data = json.loads(response.content)
+            self.logger.info(f'retrieved {data}, status_code: {response.status_code}')
+
+            if response.status_code == 201:
+                # trial key was successfully created
+                return TrialRequestReponse(
+                    success=True,
+                    api_key=data['api_key']
+                )
+            else:
+                error_message = '<b>error:</b> ' + ', '.join([f"{key}: {value}" for key, value in data.items()])
+                return TrialRequestReponse(
+                    success=False,
+                    error=error_message
+                )
+        except Exception as e:
+            self.logger.error(f"Error processing trial key request: {str(e)}")
             return TrialRequestReponse(
                 success=False,
-                error=error_message
+                error=f"Error: {str(e)}"
             )

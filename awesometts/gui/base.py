@@ -307,7 +307,94 @@ class ServiceDialog(Dialog):
         plus_mode_button.setFont(font_large)
         def activate_plus_mode_lambda():
             def activate_plus():
-                self.plus_mode_stack.setCurrentIndex(1)
+                # Create a dialog to ask for email and password
+                dialog = aqt.qt.QDialog(self)
+                dialog.setWindowTitle("Sign Up for AwesomeTTS Plus")
+                
+                layout = aqt.qt.QVBoxLayout()
+                
+                # Email field
+                email_label = aqt.qt.QLabel("Email:")
+                email_input = aqt.qt.QLineEdit()
+                email_input.setPlaceholderText("Enter your email")
+                
+                # Password field
+                password_label = aqt.qt.QLabel("Password:")
+                password_input = aqt.qt.QLineEdit()
+                password_input.setPlaceholderText("Create a password")
+                password_input.setEchoMode(aqt.qt.QLineEdit.EchoMode.Password)
+                
+                # Description
+                description = aqt.qt.QLabel("<i>Sign up to get access to 1200+ high quality TTS voices</i>")
+                description.setWordWrap(True)
+                
+                # Buttons
+                button_box = aqt.qt.QDialogButtonBox(
+                    aqt.qt.QDialogButtonBox.StandardButton.Ok | 
+                    aqt.qt.QDialogButtonBox.StandardButton.Cancel
+                )
+                ok_button = button_box.button(aqt.qt.QDialogButtonBox.StandardButton.Ok)
+                ok_button.setText("Sign Up")
+                ok_button.setStyleSheet(signup_button_stylesheet)
+                
+                # Add widgets to layout
+                layout.addWidget(description)
+                layout.addWidget(email_label)
+                layout.addWidget(email_input)
+                layout.addWidget(password_label)
+                layout.addWidget(password_input)
+                layout.addWidget(button_box)
+                
+                dialog.setLayout(layout)
+                
+                # Connect buttons
+                button_box.accepted.connect(dialog.accept)
+                button_box.rejected.connect(dialog.reject)
+                
+                # Show dialog
+                if dialog.exec() == aqt.qt.QDialog.DialogCode.Accepted:
+                    email = email_input.text().strip()
+                    password = password_input.text()
+                    
+                    # Try to request a trial key
+                    trial_signup_result = self._addon.languagetools.request_trial_key(email, password)
+                    
+                    if isinstance(trial_signup_result, dict) and 'error' in trial_signup_result:
+                        aqt.utils.showWarning(trial_signup_result['error'], parent=self)
+                    elif isinstance(trial_signup_result, dict) and 'api_key' in trial_signup_result:
+                        api_key = trial_signup_result['api_key']
+                        # Save in the config
+                        self._addon.config['plus_api_key'] = api_key
+                        # Set it in memory in the languagetools object
+                        self._addon.languagetools.set_api_key(api_key)
+                        # This will show AwesomeTTS plus in the version label
+                        self.show_plus_mode()
+                        # Force currently selected service UI to reload
+                        self.clean_built_services()
+                        dropdown = self.findChild(aqt.qt.QComboBox, 'service')
+                        idx = dropdown.currentIndex()
+                        self._on_service_activated(idx, force_options_reload=True)
+                        # Show success message
+                        aqt.utils.showInfo("Successfully signed up for AwesomeTTS Plus!", parent=self)
+                    elif hasattr(trial_signup_result, 'success') and trial_signup_result.success:
+                        api_key = trial_signup_result.api_key
+                        # Save in the config
+                        self._addon.config['plus_api_key'] = api_key
+                        # Set it in memory in the languagetools object
+                        self._addon.languagetools.set_api_key(api_key)
+                        # This will show AwesomeTTS plus in the version label
+                        self.show_plus_mode()
+                        # Force currently selected service UI to reload
+                        self.clean_built_services()
+                        dropdown = self.findChild(aqt.qt.QComboBox, 'service')
+                        idx = dropdown.currentIndex()
+                        self._on_service_activated(idx, force_options_reload=True)
+                        # Show success message
+                        aqt.utils.showInfo("Successfully signed up for AwesomeTTS Plus!", parent=self)
+                    else:
+                        error_message = getattr(trial_signup_result, 'error', "Unknown error occurred")
+                        aqt.utils.showWarning(error_message, parent=self)
+                
             return activate_plus
         plus_mode_button.pressed.connect(activate_plus_mode_lambda())
 
