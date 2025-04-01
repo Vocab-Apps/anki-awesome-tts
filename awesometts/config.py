@@ -29,6 +29,11 @@ import sqlite3
 __all__ = ['Config']
 
 
+ANKIWEB_ADDON_ID = '1436550454'
+CONFIG_ADDON_NAME = 'anki-awesome-tts'
+if ANKIWEB_ADDON_ID in __file__:
+    CONFIG_ADDON_NAME = ANKIWEB_ADDON_ID
+
 class Config(object):
     """
     Exposes a class whose instances have a dict-like interface for

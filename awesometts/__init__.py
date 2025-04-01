@@ -32,7 +32,7 @@ import aqt.qt
 
 from . import conversion as to, gui, paths, service
 from .bundle import Bundle
-from .config import Config
+from .config import Config, CONFIG_ADDON_NAME
 from .player import Player
 from .router import Router
 from .text import Sanitizer
@@ -107,12 +107,12 @@ else:
     logger = Bundle(debug=lambda *a, **k: None, error=lambda *a, **k: None,
                     info=lambda *a, **k: None, warn=lambda *a, **k: None)
 
-addon_config = aqt.mw.addonManager.getConfig('awesometts')
+addon_config = aqt.mw.addonManager.getConfig(CONFIG_ADDON_NAME)
 user_uuid = addon_config.get('user_uuid', None)
 if user_uuid == None:
     user_uuid = uuid.uuid4().hex
     addon_config['user_uuid'] = user_uuid
-    aqt.mw.addonManager.writeConfig('awesometts', addon_config)
+    aqt.mw.addonManager.writeConfig(CONFIG_ADDON_NAME, addon_config)
 
 
 config = Config(
