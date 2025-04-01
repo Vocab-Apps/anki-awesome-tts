@@ -37,7 +37,6 @@ except:
 
 from ..paths import ICONS
 from .common import Label, Note, ICON
-from ..languagetools import TrialRequestResponse
 
 __all__ = ['Dialog', 'ServiceDialog']
 
@@ -358,12 +357,10 @@ class ServiceDialog(Dialog):
                     password = password_input.text()
                     
                     # Try to request a trial key
-                    trial_signup_result: TrialRequestResponse = self._addon.languagetools.request_trial_key(email, password)
+                    trial_signup_result = self._addon.languagetools.request_trial_key(email, password)
                     
-                    if isinstance(trial_signup_result, dict) and 'error' in trial_signup_result:
-                        aqt.utils.showWarning(trial_signup_result['error'], parent=self)
-                    elif isinstance(trial_signup_result, dict) and 'api_key' in trial_signup_result:
-                        api_key = trial_signup_result['api_key']
+                    if trial_signup_result.success:
+                        api_key = trial_signup_result.api_key
                         # Save in the config
                         self._addon.config['plus_api_key'] = api_key
                         # Set it in memory in the languagetools object
@@ -377,28 +374,9 @@ class ServiceDialog(Dialog):
                         self._on_service_activated(idx, force_options_reload=True)
                         # Show success message
                         aqt.utils.showInfo("Successfully signed up for AwesomeTTS Plus!", parent=self)
-                    elif hasattr(trial_signup_result, 'success'):
-                        if trial_signup_result.success:
-                            api_key = trial_signup_result.api_key
-                            # Save in the config
-                            self._addon.config['plus_api_key'] = api_key
-                            # Set it in memory in the languagetools object
-                            self._addon.languagetools.set_api_key(api_key)
-                            # This will show AwesomeTTS plus in the version label
-                            self.show_plus_mode()
-                            # Force currently selected service UI to reload
-                            self.clean_built_services()
-                            dropdown = self.findChild(aqt.qt.QComboBox, 'service')
-                            idx = dropdown.currentIndex()
-                            self._on_service_activated(idx, force_options_reload=True)
-                            # Show success message
-                            aqt.utils.showInfo("Successfully signed up for AwesomeTTS Plus!", parent=self)
-                        else:
-                            # Show error message when success is False
-                            error_message = getattr(trial_signup_result, 'error', "Signup failed. Please try again.")
-                            aqt.utils.showWarning(error_message, parent=self)
                     else:
-                        error_message = getattr(trial_signup_result, 'error', "Unknown error occurred")
+                        # Show error message when success is False
+                        error_message = getattr(trial_signup_result, 'error', "Signup failed. Please try again.")
                         aqt.utils.showWarning(error_message, parent=self)
                 
             return activate_plus
