@@ -37,6 +37,7 @@ except:
 
 from ..paths import ICONS
 from .common import Label, Note, ICON
+from ..languagetools import TrialRequestResponse
 
 __all__ = ['Dialog', 'ServiceDialog']
 
@@ -357,7 +358,7 @@ class ServiceDialog(Dialog):
                     password = password_input.text()
                     
                     # Try to request a trial key
-                    trial_signup_result = self._addon.languagetools.request_trial_key(email, password)
+                    trial_signup_result: TrialRequestResponse = self._addon.languagetools.request_trial_key(email, password)
                     
                     if isinstance(trial_signup_result, dict) and 'error' in trial_signup_result:
                         aqt.utils.showWarning(trial_signup_result['error'], parent=self)
