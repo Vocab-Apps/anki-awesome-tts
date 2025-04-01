@@ -372,6 +372,8 @@ class ServiceDialog(Dialog):
                         dropdown = self.findChild(aqt.qt.QComboBox, 'service')
                         idx = dropdown.currentIndex()
                         self._on_service_activated(idx, force_options_reload=True)
+                        # show signed up message
+                        self.plus_mode_stack.setCurrentIndex(3)                        
                         # Show success message
                         trial_confirmation_message = """<b>IMPORTANT</b>: You must confirm your email address before you can use the service. """\
 """The email subject should be <b>Please Confirm Your Email Address</b> and sender: <b>Vocab.Ai</b>."""
@@ -411,33 +413,6 @@ class ServiceDialog(Dialog):
         stack_widget = aqt.qt.QWidget()
         stack_widget.setLayout(horizontal_layout) 
         self.plus_mode_stack.addWidget(stack_widget)
-
-        def signup_lambda(email_input, status_label):
-            def signup():
-                email = email_input.text().strip()
-                # status_label.setText(email)
-                # try to request a trial key
-                trial_signup_result = self._addon.languagetools.request_trial_key(email)
-                if 'error' in trial_signup_result:
-                    status_label.setText(trial_signup_result['error'])
-                elif 'api_key' in trial_signup_result:
-                    api_key = trial_signup_result['api_key']
-                    # save in the config
-                    self._addon.config['plus_api_key'] = api_key
-                    # set it in memory in the languagetools object
-                    self._addon.languagetools.set_api_key(api_key)
-                    # this will show AwesomeTTS plus in the version label
-                    self.show_plus_mode()
-                    # force currently selected service UI to reload
-                    # find index of currently selected service
-                    self.clean_built_services()
-                    dropdown = self.findChild(aqt.qt.QComboBox, 'service')
-                    idx = dropdown.currentIndex()
-                    self._on_service_activated(idx, force_options_reload=True)
-                    # show signed up message
-                    self.plus_mode_stack.setCurrentIndex(3)
-            return signup
-        signup_button.pressed.connect(signup_lambda(email_text_input, signup_status_label))
 
         # third layer: empty (plus mode activated)
         horizontal_layout = aqt.qt.QHBoxLayout()
