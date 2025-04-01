@@ -125,6 +125,7 @@ class LanguageTools:
             headers={
                 'Authorization': f'Api-Key {self.api_key}',
                 'User-Agent': f'anki-awesometts/{self.client_version}',
+                'X-Vocab-Addon-ID': self.client_uuid
             }
             full_url = self.vocab_api_base_url + '/audio'         
             response = requests.post(full_url, json=data, headers=headers)
