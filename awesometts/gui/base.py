@@ -377,21 +377,26 @@ class ServiceDialog(Dialog):
                         self._on_service_activated(idx, force_options_reload=True)
                         # Show success message
                         aqt.utils.showInfo("Successfully signed up for AwesomeTTS Plus!", parent=self)
-                    elif hasattr(trial_signup_result, 'success') and trial_signup_result.success:
-                        api_key = trial_signup_result.api_key
-                        # Save in the config
-                        self._addon.config['plus_api_key'] = api_key
-                        # Set it in memory in the languagetools object
-                        self._addon.languagetools.set_api_key(api_key)
-                        # This will show AwesomeTTS plus in the version label
-                        self.show_plus_mode()
-                        # Force currently selected service UI to reload
-                        self.clean_built_services()
-                        dropdown = self.findChild(aqt.qt.QComboBox, 'service')
-                        idx = dropdown.currentIndex()
-                        self._on_service_activated(idx, force_options_reload=True)
-                        # Show success message
-                        aqt.utils.showInfo("Successfully signed up for AwesomeTTS Plus!", parent=self)
+                    elif hasattr(trial_signup_result, 'success'):
+                        if trial_signup_result.success:
+                            api_key = trial_signup_result.api_key
+                            # Save in the config
+                            self._addon.config['plus_api_key'] = api_key
+                            # Set it in memory in the languagetools object
+                            self._addon.languagetools.set_api_key(api_key)
+                            # This will show AwesomeTTS plus in the version label
+                            self.show_plus_mode()
+                            # Force currently selected service UI to reload
+                            self.clean_built_services()
+                            dropdown = self.findChild(aqt.qt.QComboBox, 'service')
+                            idx = dropdown.currentIndex()
+                            self._on_service_activated(idx, force_options_reload=True)
+                            # Show success message
+                            aqt.utils.showInfo("Successfully signed up for AwesomeTTS Plus!", parent=self)
+                        else:
+                            # Show error message when success is False
+                            error_message = getattr(trial_signup_result, 'error', "Signup failed. Please try again.")
+                            aqt.utils.showWarning(error_message, parent=self)
                     else:
                         error_message = getattr(trial_signup_result, 'error', "Unknown error occurred")
                         aqt.utils.showWarning(error_message, parent=self)
