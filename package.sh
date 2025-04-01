@@ -46,7 +46,8 @@ zip -9 "${ADDON_FILENAME}" \
     awesometts/service/*.js \
     user_files/README.txt \
     __init__.py \
-    manifest.json
+    manifest.json \
+    config.json
 
 # sync 
 rclone sync ~/anki-addons-releases/ dropbox:Anki/anki-addons-releases/
