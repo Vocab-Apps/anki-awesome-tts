@@ -58,7 +58,7 @@ def makeDeckBrowserRenderContent(addon):
             # user doesn't want to see the homescreen
             return
 
-        night_mode = aqt.mw.pm.night_mode()
+        night_mode = aqt.theme.theme_manager.get_night_mode()
 
         preset_names = list(addon.config['presets'].keys())
         if len(preset_names) == 0:
