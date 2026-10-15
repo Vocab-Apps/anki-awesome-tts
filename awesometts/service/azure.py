@@ -63,8 +63,10 @@ REGIONS = [
 class AzureVoice(Voice):
     def __init__(self, voice_data):
         self.language_code = voice_data['language_code']
-        self.ssml_language_code = voice_data['audio_language_code'].replace('_', '-')
         self.voice_key = voice_data['voice_key']
+        # Azure names preserve script subtags that the catalog can omit.
+        voice_locale = self.voice_key['name'].partition('(')[2].partition(',')[0]
+        self.ssml_language_code = voice_locale or voice_data['audio_language_code'].replace('_', '-')
         self.voice_description = voice_data['voice_description']
 
     def get_key(self) -> str:
