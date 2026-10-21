@@ -25,6 +25,7 @@ import aqt.qt
 
 from .base import Dialog, ServiceDialog
 from .common import Checkbox, Label, Note
+from ..text import RE_SOUNDS
 
 __all__ = ['BrowserGenerator', 'EditorGenerator']
 
@@ -138,11 +139,17 @@ class BrowserGenerator(ServiceDialog):
             lambda status: self._on_behavior_changed(),
         )
 
+        skip_existing = Checkbox(
+            "Skip if Destination Field Already Has Audio",
+            object_name='skip_existing'
+        )
+
         layout = aqt.qt.QVBoxLayout()
         layout.addWidget(append)
         layout.addWidget(overwrite)
         layout.addSpacing(self._SPACING)
         layout.addWidget(behavior)
+        layout.addWidget(skip_existing)
 
         widget = aqt.qt.QWidget()
         widget.setLayout(layout)
@@ -213,6 +220,9 @@ class BrowserGenerator(ServiceDialog):
         self.findChild(Checkbox, 'behavior') \
             .setChecked(config['last_mass_behavior'])
 
+        self.findChild(Checkbox, 'skip_existing') \
+            .setChecked(config['last_mass_skip_existing'])
+
         super(BrowserGenerator, self).show(*args, **kwargs)
 
         source.setFocus()
@@ -228,22 +238,44 @@ class BrowserGenerator(ServiceDialog):
         dest = now['last_mass_dest']
         append = now['last_mass_append']
         behavior = now['last_mass_behavior']
+        skip_existing = now['last_mass_skip_existing']
 
-        eligible_notes = [
+        # Notes with both source and dest fields
+        notes_with_fields = [
             note
             for note in self._notes
             if source in note and dest in note
         ]
+        skip_no_fields = len(self._notes) - len(notes_with_fields)
+
+        # Filter out notes that already have audio in the destination field
+        skip_has_audio = 0
+        if skip_existing:
+            eligible_notes = [
+                note
+                for note in notes_with_fields
+                if not RE_SOUNDS.search(note[dest])
+            ]
+            skip_has_audio = len(notes_with_fields) - len(eligible_notes)
+        else:
+            eligible_notes = notes_with_fields
 
         if not eligible_notes:
-            self._alerts(
-                f"Of the {len(self._notes)} notes selected in the browser, "
-                f"none have both '{source}' and '{dest}' fields."
-                if len(self._notes) > 1
-                else f"The selected note does not have both "
-                     f"'{source}' and '{dest}' fields.",
-                self,
-            )
+            if skip_existing and skip_has_audio > 0:
+                self._alerts(
+                    f"Of the {len(self._notes)} notes selected in the browser, "
+                    f"all eligible notes already have audio in the '{dest}' field.",
+                    self,
+                )
+            else:
+                self._alerts(
+                    f"Of the {len(self._notes)} notes selected in the browser, "
+                    f"none have both '{source}' and '{dest}' fields."
+                    if len(self._notes) > 1
+                    else f"The selected note does not have both "
+                         f"'{source}' and '{dest}' fields.",
+                    self,
+                )
             return
 
         self._disable_inputs()
@@ -279,6 +311,8 @@ class BrowserGenerator(ServiceDialog):
                 'total': len(self._notes),
                 'elig': len(eligible_notes),
                 'skip': len(self._notes) - len(eligible_notes),
+                'skip_no_fields': skip_no_fields,
+                'skip_has_audio': skip_has_audio,
                 'done': 0,  # all notes processed
                 'okay': 0,  # calls which resulted in a successful MP3
                 'fail': 0,  # calls which resulted in an exception
@@ -510,12 +544,7 @@ class BrowserGenerator(ServiceDialog):
                 "were" if proc['counts']['done'] != 1 else "was",
             ),
 
-            "%d note%s skipped for not having both the source and "
-            "destination fields. Of those remaining, " % (
-                proc['counts']['skip'],
-                "s were" if proc['counts']['skip'] != 1
-                else " was",
-            )
+            self._format_skip_message(proc['counts'])
             if proc['counts']['skip']
             else "During processing, "
         ]
@@ -582,12 +611,35 @@ class BrowserGenerator(ServiceDialog):
             lambda: self._alerts("".join(messages), self._browser),
         )
 
+    def _format_skip_message(self, counts):
+        """
+        Format the skip message based on skip reasons.
+        """
+        parts = []
+        if counts['skip_no_fields']:
+            parts.append(
+                "%d note%s skipped for not having both the source and "
+                "destination fields" % (
+                    counts['skip_no_fields'],
+                    "s were" if counts['skip_no_fields'] != 1 else " was",
+                )
+            )
+        if counts['skip_has_audio']:
+            parts.append(
+                "%d note%s skipped because the destination field "
+                "already contains audio" % (
+                    counts['skip_has_audio'],
+                    "s were" if counts['skip_has_audio'] != 1 else " was",
+                )
+            )
+        return "; ".join(parts) + ". Of those remaining, "
+
     def _get_all(self):
         """
         Adds support for fields and behavior.
         """
 
-        source, dest, append, behavior = self._get_field_values()
+        source, dest, append, behavior, skip_existing = self._get_field_values()
 
         # TODO: could be rewritten with {**, **} syntax
         return dict(
@@ -596,6 +648,7 @@ class BrowserGenerator(ServiceDialog):
                 ('last_mass_append', append),
                 ('last_mass_behavior', behavior),
                 ('last_mass_dest', dest),
+                ('last_mass_skip_existing', skip_existing),
                 ('last_mass_source', source),
             ]
         )
@@ -603,7 +656,7 @@ class BrowserGenerator(ServiceDialog):
     def _get_field_values(self):
         """
         Returns the user's source and destination fields, append state,
-        and handling mode.
+        handling mode, and skip existing option.
         """
 
         return (
@@ -611,6 +664,7 @@ class BrowserGenerator(ServiceDialog):
             self.findChild(aqt.qt.QComboBox, 'dest').currentText(),
             self.findChild(aqt.qt.QRadioButton, 'append').isChecked(),
             self.findChild(Checkbox, 'behavior').isChecked(),
+            self.findChild(Checkbox, 'skip_existing').isChecked(),
         )
 
     def _on_handling_toggled(self):

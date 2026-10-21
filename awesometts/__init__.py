@@ -134,6 +134,7 @@ config = Config(
         ('last_mass_append', 'integer', True, to.lax_bool, int),
         ('last_mass_behavior', 'integer', True, to.lax_bool, int),
         ('last_mass_dest', 'text', 'Back', str, str),
+        ('last_mass_skip_existing', 'integer', False, to.lax_bool, int),
         ('last_mass_source', 'text', 'Front', str, str),
         ('last_options', 'text', {}, to.deserialized_dict, to.compact_json),
         ('last_service', 'text', ('sapi5js' if 'win32' in sys.platform
