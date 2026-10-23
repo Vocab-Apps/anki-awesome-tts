@@ -64,6 +64,9 @@ class AzureVoice(Voice):
     def __init__(self, voice_data):
         self.language_code = voice_data['language_code']
         self.voice_key = voice_data['voice_key']
+        # Azure names preserve script subtags that the catalog can omit.
+        voice_locale = self.voice_key['name'].partition('(')[2].partition(',')[0]
+        self.ssml_language_code = voice_locale or voice_data['audio_language_code'].replace('_', '-')
         self.voice_description = voice_data['voice_description']
 
     def get_key(self) -> str:
@@ -213,7 +216,7 @@ class Azure(Service):
                 self.get_token(subscription_key, region)
 
             voice_name = voice.get_key()
-            language = voice.get_language_code()
+            language = voice.ssml_language_code
 
             base_url = f'https://{region}.tts.speech.microsoft.com/'
             url_path = 'cognitiveservices/v1'
@@ -225,8 +228,12 @@ class Azure(Service):
                 'User-Agent': 'anki-awesome-tts'
             }
 
-            ssml_str = f"""<speak version="1.0" xmlns="https://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="en-US">
-<voice name="{voice_name}"><prosody rate="{rate:0.1f}" pitch="{pitch:+.0f}Hz" >{text}</prosody></voice>
+            speech_text = f'<prosody rate="{rate:0.1f}" pitch="{pitch:+.0f}Hz">{text}</prosody>'
+            if 'Multilingual' in voice_name:
+                speech_text = f'<lang xml:lang="{language}">{speech_text}</lang>'
+
+            ssml_str = f"""<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="{language}">
+<voice name="{voice_name}">{speech_text}</voice>
 </speak>""".replace('\n', '')
             
             body = ssml_str.encode(encoding='utf-8')
