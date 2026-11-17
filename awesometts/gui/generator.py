@@ -789,19 +789,37 @@ class EditorGenerator(ServiceDialog):
             super(EditorGenerator, self).accept()
 
             current_field_index = self.currentlySelectedFieldIndex
-            if current_field_index != None:
-                # there is currently a selected field
-                if self._editor.note != None:
-                    # add to end of field                    
-                    field_value = self._editor.note.fields[current_field_index]
-                    audio_tag = self._editor._addMedia(path)                    
-                    updated_field_value = f'{field_value} {audio_tag}'
-                    self._editor.note.fields[current_field_index] = updated_field_value
-                    self._editor.set_note(self._editor.note)
-                    return
+            note = getattr(self._editor, 'note', None)
+            if current_field_index != None and note != None:
+                # legacy editor: add to end of field
+                field_value = note.fields[current_field_index]
+                audio_tag = self._editor._addMedia(path)
+                note.fields[current_field_index] = f'{field_value} {audio_tag}'
+                self._editor.set_note(note)
+                return
 
-            # if we didn't return at this point, use fallback method
-            self._editor.addMedia(path)
+            if hasattr(self._editor, 'addMedia'):
+                self._editor.addMedia(path)
+                return
+
+            # NewEditor (Anki 25+): no .note, ._addMedia or .addMedia
+            from aqt import mw
+            from aqt.utils import tooltip
+            filename = mw.col.media.add_file(path)
+            nid = getattr(self._editor, 'nid', None)
+            if current_field_index != None and nid:
+                # existing note: let the editor save, append the sound tag in the collection, reload
+                def append_sound_tag():
+                    n = mw.col.get_note(nid)
+                    n.fields[current_field_index] += f' [sound:{filename}]'
+                    mw.col.update_note(n)
+                    self._editor.reload_note()
+                self._editor.call_after_note_saved(append_sound_tag)
+                return
+
+            # new note (Add window) or unknown field: put the tag on the clipboard
+            aqt.qt.QApplication.clipboard().setText(f'[sound:{filename}]')
+            tooltip("Audio ready. Click a field and paste it.", period=4000)
 
 
         svc_id = now['last_service']
@@ -827,7 +845,7 @@ class EditorGenerator(ServiceDialog):
                                      presets=config['presets'],
                                      callbacks=callbacks,
                                      want_human=want_human,
-                                     note=self._editor.note)
+                                     note=getattr(self._editor, "note", None))
         else:
             options = now['last_options'][now['last_service']]
             self._addon.router(svc_id=svc_id,
@@ -835,7 +853,7 @@ class EditorGenerator(ServiceDialog):
                                options=options,
                                callbacks=callbacks,
                                want_human=want_human,
-                               note=self._editor.note)
+                               note=getattr(self._editor, "note", None))
 
 
 class _Progress(Dialog):
