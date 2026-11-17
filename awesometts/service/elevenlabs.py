@@ -40,7 +40,7 @@ class ElevenLabs(Service):
             # plus mode, no need for an API key
             return []        
         return [
-            dict(key='api_key', label="API Key", required=True)
+            dict(key='key', label="API Key", required=True)
         ]
 
     def get_voices(self) -> List[StandardVoice]:
@@ -75,7 +75,7 @@ class ElevenLabs(Service):
                 values=(0.0, 1.0),
                 default=0.75,
                 transform=float),
-            dict(key='similarity_boost',
+            dict(key='similarityboost',
                 label='Similary',
                 values=(0.0, 1.0),
                 default=0.75,
@@ -95,13 +95,13 @@ class ElevenLabs(Service):
             language = voice.get_language_code()
             options = {
                 "stability": options.get('stability', self.DEFAULT_STABILITY),
-                "similarity_boost": options.get('similarity_boost', self.DEFAULT_SIMILARITY)
+                "similarity_boost": options.get('similarityboost', self.DEFAULT_SIMILARITY)
             }
             self.languagetools.generate_audio_v2(text, service, 'batch', language, 'n/a', voice_key, options, path)
 
         else:
 
-            api_key = options['api_key']
+            api_key = options['key']
 
             voice_id = voice.voice_key['voice_id']
             url = f'https://api.elevenlabs.io/v1/text-to-speech/{voice_id}'
@@ -117,7 +117,7 @@ class ElevenLabs(Service):
                 "model_id": voice.voice_key['model_id'],
                 "voice_settings": {
                     "stability": options.get('stability', self.DEFAULT_STABILITY),
-                    "similarity_boost": options.get('similarity_boost', self.DEFAULT_SIMILARITY)
+                    "similarity_boost": options.get('similarityboost', self.DEFAULT_SIMILARITY)
                 }
             }
 
